@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:math' as math;
-
 import '../models/category_model.dart';
 import '../models/flashcard_model.dart';
 import '../state/app_state.dart';
@@ -14,10 +13,7 @@ import 'completion_screen.dart';
 class FlashcardScreen extends StatefulWidget {
   final CategoryModel category;
 
-  const FlashcardScreen({
-    super.key,
-    required this.category,
-  });
+  const FlashcardScreen({super.key, required this.category});
 
   @override
   State<FlashcardScreen> createState() => _FlashcardScreenState();
@@ -26,7 +22,6 @@ class FlashcardScreen extends StatefulWidget {
 class _FlashcardScreenState extends State<FlashcardScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _flipController;
-
   int _index = 0;
   bool _revealed = false;
   int? _selectedOption;
@@ -34,7 +29,6 @@ class _FlashcardScreenState extends State<FlashcardScreen>
   @override
   void initState() {
     super.initState();
-
     _flipController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -47,44 +41,29 @@ class _FlashcardScreenState extends State<FlashcardScreen>
     super.dispose();
   }
 
-  List<FlashCardModel> _cards(AppState app) {
-    return app.cardsFor(widget.category.id);
-  }
+  List<FlashCardModel> _cards(AppState app) => app.cardsFor(widget.category.id);
 
   void _reveal() {
     if (_revealed) return;
-
-    setState(() {
-      _revealed = true;
-    });
-
+    setState(() => _revealed = true);
     _flipController.forward();
   }
 
   void _selectOption(int i, FlashCardModel card) {
     if (_revealed) return;
-
     setState(() {
       _selectedOption = i;
       _revealed = true;
     });
   }
 
-  void _next(
-    AppState app,
-    List<FlashCardModel> cards,
-  ) {
+  void _next(AppState app, List<FlashCardModel> cards) {
     if (_index + 1 >= cards.length) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => CompletionScreen(
-            category: widget.category,
-          ),
-        ),
-      );
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+        builder: (_) => CompletionScreen(category: widget.category),
+      ));
       return;
     }
-
     setState(() {
       _index++;
       _revealed = false;
@@ -95,7 +74,6 @@ class _FlashcardScreenState extends State<FlashcardScreen>
 
   void _previous() {
     if (_index == 0) return;
-
     setState(() {
       _index--;
       _revealed = false;
@@ -104,18 +82,12 @@ class _FlashcardScreenState extends State<FlashcardScreen>
     });
   }
 
-  void _markKnown(
-    AppState app,
-    FlashCardModel card,
-  ) {
+  void _markKnown(AppState app, FlashCardModel card) {
     app.markKnown(card);
     _next(app, _cards(app));
   }
 
-  void _markStillLearning(
-    AppState app,
-    FlashCardModel card,
-  ) {
+  void _markStillLearning(AppState app, FlashCardModel card) {
     app.markStillLearning(card);
     _next(app, _cards(app));
   }
@@ -124,15 +96,9 @@ class _FlashcardScreenState extends State<FlashcardScreen>
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     final cards = _cards(app);
-
     if (cards.isEmpty) {
-      return const Scaffold(
-        body: Center(
-          child: Text('No cards in this category yet.'),
-        ),
-      );
+      return const Scaffold(body: Center(child: Text('No cards in this category yet.')));
     }
-
     final card = cards[_index.clamp(0, cards.length - 1)];
     final textTheme = Theme.of(context).textTheme;
     final accent = widget.category.color;
@@ -141,11 +107,10 @@ class _FlashcardScreenState extends State<FlashcardScreen>
       body: SafeArea(
         child: GestureDetector(
           onHorizontalDragEnd: (details) {
-            final velocity = details.primaryVelocity ?? 0;
-
-            if (velocity < -200 && _revealed) {
+            final v = details.primaryVelocity ?? 0;
+            if (v < -200 && _revealed) {
               _next(app, cards);
-            } else if (velocity > 200) {
+            } else if (v > 200) {
               _previous();
             }
           },
@@ -153,38 +118,27 @@ class _FlashcardScreenState extends State<FlashcardScreen>
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               children: [
-                // ---------------- TOP BAR ----------------
+                // ---- Top bar ----
                 Row(
                   children: [
                     AppIconButton(
                       icon: Icons.arrow_back_rounded,
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text(
-                            widget.category.name,
-                            style: textTheme.titleMedium,
-                          ),
-                          Text(
-                            '${_index + 1} / ${cards.length}',
-                            style: textTheme.bodySmall,
-                          ),
+                          Text(widget.category.name, style: textTheme.titleMedium),
+                          Text('${_index + 1} / ${cards.length}', style: textTheme.bodySmall),
                         ],
                       ),
                     ),
                     const SizedBox(width: 46),
                   ],
                 ),
-
                 const SizedBox(height: AppSpacing.md),
-
-                // ---------------- PROGRESS BAR ----------------
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
@@ -194,10 +148,8 @@ class _FlashcardScreenState extends State<FlashcardScreen>
                     valueColor: AlwaysStoppedAnimation(accent),
                   ),
                 ),
-
                 const SizedBox(height: AppSpacing.xl),
 
-                // ---------------- CARD ----------------
                 Expanded(
                   child: card.options != null
                       ? _QuizCardBody(
@@ -218,7 +170,6 @@ class _FlashcardScreenState extends State<FlashcardScreen>
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // ---------------- ACTION BUTTONS ----------------
                 if (_revealed)
                   Row(
                     children: [
@@ -227,9 +178,7 @@ class _FlashcardScreenState extends State<FlashcardScreen>
                           label: 'Still Learning',
                           icon: Icons.refresh_rounded,
                           accentColor: AppColors.warningOrange,
-                          onPressed: () {
-                            _markStillLearning(app, card);
-                          },
+                          onPressed: () => _markStillLearning(app, card),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.md),
@@ -238,18 +187,14 @@ class _FlashcardScreenState extends State<FlashcardScreen>
                           label: 'I Know This',
                           icon: Icons.check_rounded,
                           state: ButtonState.success,
-                          onPressed: () {
-                            _markKnown(app, card);
-                          },
+                          onPressed: () => _markKnown(app, card),
                         ),
                       ),
                     ],
                   )
                 else
                   Text(
-                    card.options != null
-                        ? 'Choose an answer above'
-                        : 'Tap the card to reveal the answer',
+                    card.options != null ? 'Choose an answer above' : 'Tap the card to reveal the answer',
                     textAlign: TextAlign.center,
                     style: textTheme.bodySmall,
                   ),
@@ -262,10 +207,7 @@ class _FlashcardScreenState extends State<FlashcardScreen>
   }
 }
 
-// ============================================================
-// FLIP CARD
-// ============================================================
-
+/// Flip-animated card for definition/scenario-without-options cards.
 class _FlipCardBody extends StatelessWidget {
   final FlashCardModel card;
   final Color accent;
@@ -287,38 +229,24 @@ class _FlipCardBody extends StatelessWidget {
       onTap: onTap,
       child: AnimatedBuilder(
         animation: controller,
-        builder: (context, child) {
+        builder: (context, _) {
           final angle = controller.value * math.pi;
-
-          if (angle < math.pi / 2) {
-            return Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()
-                ..setEntry(3, 2, 0.0015)
-                ..rotateY(angle),
-              child: _buildFront(context),
-            );
-          }
-
+          final showBack = angle > math.pi / 2;
+          final displayAngle = showBack ? angle - math.pi : angle;
           return Transform(
             alignment: Alignment.center,
             transform: Matrix4.identity()
               ..setEntry(3, 2, 0.0015)
-              ..rotateY(angle - math.pi),
-            child: _buildBack(context),
+              ..rotateY(displayAngle),
+            child: showBack ? _buildBack(context) : _buildFront(context),
           );
         },
       ),
     );
   }
 
-  // ==========================================================
-  // FRONT
-  // ==========================================================
-
   Widget _buildFront(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-
     return GlassCard(
       glow: true,
       glowColor: accent,
@@ -332,113 +260,65 @@ class _FlipCardBody extends StatelessWidget {
             Container(
               width: 64,
               height: 64,
-              decoration: BoxDecoration(
-                color: accent.withOpacity(0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.security_rounded,
-                color: accent,
-                size: 30,
-              ),
+              decoration: BoxDecoration(color: accent.withOpacity(0.15), shape: BoxShape.circle),
+              child: Icon(Icons.security_rounded, color: accent, size: 30),
             ),
             const SizedBox(height: AppSpacing.xl),
-            Text(
-              card.question,
-              textAlign: TextAlign.center,
-              style: textTheme.titleLarge?.copyWith(
-                color: AppColors.darkTextPrimary,
-              ),
-            ),
+            Text(card.question,
+                textAlign: TextAlign.center, style: textTheme.titleLarge),
             const Spacer(),
-            Text(
-              'Tap to reveal answer',
-              style: textTheme.bodySmall?.copyWith(
-                color: accent,
-              ),
-            ),
+            Text('Tap to reveal answer',
+                style: textTheme.bodySmall?.copyWith(color: accent)),
           ],
         ),
       ),
     );
   }
 
-  // ==========================================================
-  // BACK
-  // ==========================================================
-
   Widget _buildBack(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-
-    return GlassCard(
-      glow: true,
-      glowColor: AppColors.successGreen,
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: SizedBox(
-        width: double.infinity,
-        height: 380,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'ANSWER',
-                style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.successGreen,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                card.answer,
-                style: textTheme.bodyLarge?.copyWith(
-                  color: AppColors.darkTextPrimary,
-                ),
-              ),
-              if (card.example != null) ...[
-                const SizedBox(height: AppSpacing.lg),
-                Text(
-                  'EXAMPLE',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.secondaryPurple,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+    return Transform(
+      alignment: Alignment.center,
+      transform: Matrix4.identity()..rotateY(math.pi),
+      child: GlassCard(
+        glow: true,
+        glowColor: AppColors.successGreen,
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: SizedBox(
+          width: double.infinity,
+          height: 380,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('ANSWER',
+                    style: textTheme.bodySmall?.copyWith(
+                        color: AppColors.successGreen, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 6),
-                Text(
-                  card.example!,
-                  style: textTheme.bodyLarge?.copyWith(
-                    color: AppColors.darkTextPrimary,
-                  ),
+                Text(card.answer, style: textTheme.bodyLarge),
+                if (card.example != null) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  Text('EXAMPLE',
+                      style: textTheme.bodySmall?.copyWith(
+                          color: AppColors.secondaryPurple, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 6),
+                  Text(card.example!, style: textTheme.bodyLarge),
+                ],
+                if (card.tip != null) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  Text('TIP',
+                      style: textTheme.bodySmall?.copyWith(
+                          color: AppColors.primaryCyan, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 6),
+                  Text(card.tip!, style: textTheme.bodyLarge),
+                ],
+                const SizedBox(height: AppSpacing.lg),
+                Center(
+                  child: Text('Tap to flip back',
+                      style: textTheme.bodySmall?.copyWith(color: AppColors.darkTextSecondary)),
                 ),
               ],
-              if (card.tip != null) ...[
-                const SizedBox(height: AppSpacing.lg),
-                Text(
-                  'TIP',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.primaryCyan,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  card.tip!,
-                  style: textTheme.bodyLarge?.copyWith(
-                    color: AppColors.darkTextPrimary,
-                  ),
-                ),
-              ],
-              const SizedBox(height: AppSpacing.lg),
-              Center(
-                child: Text(
-                  'Tap to flip back',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.darkTextSecondary,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -446,10 +326,8 @@ class _FlipCardBody extends StatelessWidget {
   }
 }
 
-// ============================================================
-// QUIZ CARD
-// ============================================================
-
+/// Scenario / multiple-choice card body — shows options, then explains the
+/// correct answer with a success/error state once one is selected.
 class _QuizCardBody extends StatelessWidget {
   final FlashCardModel card;
   final Color accent;
@@ -478,93 +356,51 @@ class _QuizCardBody extends StatelessWidget {
         children: [
           GlassCard(
             glow: revealed,
-            glowColor: revealed
-                ? (isCorrect ? AppColors.successGreen : AppColors.errorRed)
-                : accent,
-            child: Text(
-              card.question,
-              style: textTheme.titleLarge?.copyWith(
-                color: AppColors.darkTextPrimary,
-              ),
-            ),
+            glowColor: revealed ? (isCorrect ? AppColors.successGreen : AppColors.errorRed) : accent,
+            child: Text(card.question, style: textTheme.titleLarge),
           ),
           const SizedBox(height: AppSpacing.lg),
           ...List.generate(options.length, (i) {
             final isSelected = selectedOption == i;
             final isRight = i == correctIndex;
-
             Color? borderColor;
-            Color? backgroundColor;
-
+            Color? bg;
             if (revealed) {
               if (isRight) {
                 borderColor = AppColors.successGreen;
-                backgroundColor = AppColors.successGreen.withOpacity(0.12);
+                bg = AppColors.successGreen.withOpacity(0.12);
               } else if (isSelected) {
                 borderColor = AppColors.errorRed;
-                backgroundColor = AppColors.errorRed.withOpacity(0.12);
+                bg = AppColors.errorRed.withOpacity(0.12);
               }
             }
-
             return Padding(
-              padding: const EdgeInsets.only(
-                bottom: AppSpacing.md,
-              ),
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
               child: InkWell(
-                borderRadius: BorderRadius.circular(
-                  AppRadius.medium,
-                ),
+                borderRadius: BorderRadius.circular(AppRadius.medium),
                 onTap: () => onSelect(i),
                 child: Container(
-                  padding: const EdgeInsets.all(
-                    AppSpacing.md,
-                  ),
+                  padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(
-                      AppRadius.medium,
-                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.medium),
                     border: Border.all(
-                      color: borderColor ?? Colors.white.withOpacity(0.15),
-                    ),
-                    color: backgroundColor,
+                        color: borderColor ?? Colors.white.withOpacity(0.15)),
+                    color: bg,
                   ),
                   child: Row(
                     children: [
                       CircleAvatar(
                         radius: 12,
                         backgroundColor: accent.withOpacity(0.15),
-                        child: Text(
-                          String.fromCharCode(65 + i),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: accent,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                        child: Text(String.fromCharCode(65 + i),
+                            style: TextStyle(fontSize: 12, color: accent, fontWeight: FontWeight.w700)),
                       ),
-                      const SizedBox(
-                        width: AppSpacing.md,
-                      ),
-                      Expanded(
-                        child: Text(
-                          options[i],
-                          style: textTheme.bodyLarge?.copyWith(
-                            color: AppColors.darkTextPrimary,
-                          ),
-                        ),
-                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(child: Text(options[i], style: textTheme.bodyLarge)),
                       if (revealed && isRight)
-                        const Icon(
-                          Icons.check_circle,
-                          color: AppColors.successGreen,
-                          size: 20,
-                        ),
+                        const Icon(Icons.check_circle, color: AppColors.successGreen, size: 20),
                       if (revealed && isSelected && !isRight)
-                        const Icon(
-                          Icons.cancel,
-                          color: AppColors.errorRed,
-                          size: 20,
-                        ),
+                        const Icon(Icons.cancel, color: AppColors.errorRed, size: 20),
                     ],
                   ),
                 ),
@@ -574,35 +410,18 @@ class _QuizCardBody extends StatelessWidget {
           if (revealed) ...[
             const SizedBox(height: AppSpacing.sm),
             GlassCard(
-              padding: const EdgeInsets.all(
-                AppSpacing.md,
-              ),
+              padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    isCorrect ? 'Correct!' : 'Not quite',
-                    style: textTheme.titleMedium?.copyWith(
-                      color: isCorrect
-                          ? AppColors.successGreen
-                          : AppColors.errorRed,
-                    ),
-                  ),
+                  Text(isCorrect ? 'Correct!' : 'Not quite',
+                      style: textTheme.titleMedium?.copyWith(
+                          color: isCorrect ? AppColors.successGreen : AppColors.errorRed)),
                   const SizedBox(height: 6),
-                  Text(
-                    card.answer,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.darkTextSecondary,
-                    ),
-                  ),
+                  Text(card.answer, style: textTheme.bodyMedium),
                   if (card.tip != null) ...[
                     const SizedBox(height: 6),
-                    Text(
-                      'Tip: ${card.tip!}',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.darkTextSecondary,
-                      ),
-                    ),
+                    Text('Tip: ${card.tip!}', style: textTheme.bodySmall),
                   ],
                 ],
               ),
